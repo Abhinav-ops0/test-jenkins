@@ -1,16 +1,10 @@
-variable "aws_region" {
-  description = "AWS region where the S3 bucket will be created"
+variable "region" {
+  description = "The AWS region to deploy resources in"
   type        = string
   default     = "us-east-1"
 }
 
 variable "bucket_name" {
-  description = "Name of the S3 bucket to create"
+  description = "The name of the S3 bucket"
   type        = string
-}
-
-variable "environment" {
-  description = "Environment where the S3 bucket is being deployed"
-  type        = string
-  default     = "dev"
 }
