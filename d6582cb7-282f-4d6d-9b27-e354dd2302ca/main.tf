@@ -1,3 +1,7 @@
+module "test-eve" {
+  source = "./test-eve"
+}
+
 module "test" {
   source = "./test"
 }
