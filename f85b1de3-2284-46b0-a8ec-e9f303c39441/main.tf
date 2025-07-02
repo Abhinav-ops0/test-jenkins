@@ -11,7 +11,7 @@ provider "aws" {
   region = var.aws_region
 }
 
-resource "aws_s3_bucket" "bucket" {
+resource "aws_s3_bucket" "main" {
   bucket = var.bucket_name
 
   tags = {
@@ -20,13 +20,23 @@ resource "aws_s3_bucket" "bucket" {
   }
 }
 
-resource "aws_s3_bucket_acl" "bucket_acl" {
-  bucket = aws_s3_bucket.bucket.id
-  acl    = "private"
+# Configure bucket access control
+resource "aws_s3_bucket_ownership_controls" "main" {
+  bucket = aws_s3_bucket.main.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
 }
 
-resource "aws_s3_bucket_versioning" "bucket_versioning" {
-  bucket = aws_s3_bucket.bucket.id
+resource "aws_s3_bucket_acl" "main" {
+  depends_on = [aws_s3_bucket_ownership_controls.main]
+  bucket     = aws_s3_bucket.main.id
+  acl        = "private"
+}
+
+# Enable bucket versioning
+resource "aws_s3_bucket_versioning" "main" {
+  bucket = aws_s3_bucket.main.id
   versioning_configuration {
     status = "Enabled"
   }
