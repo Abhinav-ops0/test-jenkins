@@ -1,17 +1,5 @@
-variable "region" {
-  description = "AWS region"
+variable "aws_region" {
+  description = "The AWS region to deploy resources"
   type        = string
-  default     = "us-west-2"
-}
-
-variable "bucket_name" {
-  description = "Name of the S3 bucket"
-  type        = string
-  default     = "test-team-be-unique-eve-1"
-}
-
-variable "environment" {
-  description = "Environment tag for the S3 bucket"
-  type        = string
-  default     = "dev"
+  default     = "us-east-1"
 }
