@@ -1,21 +1,19 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.0"
-    }
-  }
-}
-
 provider "aws" {
-  region = var.region
+  region = var.aws_region
 }
 
-resource "aws_s3_bucket" "this" {
-  bucket = var.bucket_name
+resource "aws_s3_bucket" "bucket" {
+  bucket = "test-morning-backend-issue-no-acl"
+  
+  # ACLs are disabled by default in newer AWS provider versions
+  # By not specifying any ACL, we ensure no ACL is applied
+}
 
-  tags = {
-    Name        = var.bucket_name
-    Environment = var.environment
+# Explicitly disable ACLs for the bucket
+resource "aws_s3_bucket_ownership_controls" "bucket_ownership" {
+  bucket = aws_s3_bucket.bucket.id
+  
+  rule {
+    object_ownership = "BucketOwnerEnforced"
   }
 }
