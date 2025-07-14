@@ -1,12 +1,27 @@
-module "test-eve" {
-  source = "./test-eve"
+provider "aws" {
+  region = var.region
 }
 
-module "test" {
-  source = "./test"
+resource "aws_s3_bucket" "this" {
+  bucket = var.bucket_name
 }
 
-module "test-s3-inspect" {
-  source = "./test-s3-inspect"
+resource "aws_s3_bucket_ownership_controls" "this" {
+  bucket = aws_s3_bucket.this.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
 }
 
+resource "aws_s3_bucket_acl" "this" {
+  depends_on = [aws_s3_bucket_ownership_controls.this]
+  bucket     = aws_s3_bucket.this.id
+  acl        = "private"
+}
+
+resource "aws_s3_bucket_versioning" "this" {
+  bucket = aws_s3_bucket.this.id
+  versioning_configuration {
+    status = var.enable_versioning ? "Enabled" : "Disabled"
+  }
+}
