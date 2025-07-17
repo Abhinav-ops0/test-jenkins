@@ -1,11 +1,5 @@
-variable "aws_region" {
-  description = "The AWS region to deploy resources into"
+variable "region" {
+  description = "The AWS region to deploy resources in"
   type        = string
   default     = "us-east-1"
-}
-
-variable "environment" {
-  description = "Environment name for tagging purposes"
-  type        = string
-  default     = "dev"
 }
