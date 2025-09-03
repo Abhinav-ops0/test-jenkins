@@ -10,3 +10,13 @@ resource "aws_s3_bucket" "db_bucket" {
     Environment = var.environment
   }
 }
+
+resource "aws_s3_bucket" "demo_bucket" {
+  bucket = "test-123-demo-purpose-123"
+
+  tags = {
+    Name        = "test-123-demo-purpose-123"
+    Environment = var.environment
+    Purpose     = "Demo"
+  }
+}
