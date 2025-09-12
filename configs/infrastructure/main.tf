@@ -5,10 +5,10 @@ provider "aws" {
 
 # S3 Bucket
 resource "aws_s3_bucket" "main" {
-  bucket = "s3-test-1"
+  bucket = "test-iac-2"
 
   tags = {
-    Name        = "s3-test-1"
+    Name        = "test-iac-2"
     Environment = "Test"
     Managed_by  = "Terraform"
   }
