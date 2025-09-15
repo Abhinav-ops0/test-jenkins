@@ -3,19 +3,12 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Variables
-variable "bucket_name" {
-  description = "Name of the S3 bucket"
-  type        = string
-  default     = "my-unique-bucket-name-2023" # Change this to your desired bucket name
-}
-
-# S3 Bucket
-resource "aws_s3_bucket" "main" {
-  bucket = var.bucket_name
+# Create S3 bucket
+resource "aws_s3_bucket" "my_bucket" {
+  bucket = "help-my-s3-success"
 
   tags = {
-    Name        = var.bucket_name
+    Name        = "help-my-s3-success"
     Environment = "Production"
     Managed_by  = "Terraform"
   }
@@ -23,7 +16,7 @@ resource "aws_s3_bucket" "main" {
 
 # Enable versioning
 resource "aws_s3_bucket_versioning" "versioning" {
-  bucket = aws_s3_bucket.main.id
+  bucket = aws_s3_bucket.my_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
@@ -31,7 +24,7 @@ resource "aws_s3_bucket_versioning" "versioning" {
 
 # Enable server-side encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
-  bucket = aws_s3_bucket.main.id
+  bucket = aws_s3_bucket.my_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -42,7 +35,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
 
 # Block public access
 resource "aws_s3_bucket_public_access_block" "public_access_block" {
-  bucket = aws_s3_bucket.main.id
+  bucket = aws_s3_bucket.my_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -50,36 +43,11 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
   restrict_public_buckets = true
 }
 
-# Bucket policy
-resource "aws_s3_bucket_policy" "bucket_policy" {
-  bucket = aws_s3_bucket.main.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "DenyUnencryptedObjectUploads"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:PutObject"
-        Resource  = "${aws_s3_bucket.main.arn}/*"
-        Condition = {
-          StringNotEquals = {
-            "s3:x-amz-server-side-encryption" = "AES256"
-          }
-        }
-      }
-    ]
-  })
-}
-
-# Outputs
+# Output the bucket name and ARN
 output "bucket_name" {
-  description = "Name of the created S3 bucket"
-  value       = aws_s3_bucket.main.id
+  value = aws_s3_bucket.my_bucket.id
 }
 
 output "bucket_arn" {
-  description = "ARN of the created S3 bucket"
-  value       = aws_s3_bucket.main.arn
+  value = aws_s3_bucket.my_bucket.arn
 }
