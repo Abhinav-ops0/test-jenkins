@@ -3,13 +3,20 @@ provider "aws" {
   region = "us-east-1"
 }
 
+# Variables
+variable "bucket_name" {
+  description = "Name of the S3 bucket"
+  type        = string
+  default     = "my-unique-bucket-name-2023" # Change this to your desired bucket name
+}
+
 # S3 Bucket
 resource "aws_s3_bucket" "main" {
-  bucket = "test-iac-2"
+  bucket = var.bucket_name
 
   tags = {
-    Name        = "test-iac-2"
-    Environment = "Test"
+    Name        = var.bucket_name
+    Environment = "Production"
     Managed_by  = "Terraform"
   }
 }
@@ -43,13 +50,36 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
   restrict_public_buckets = true
 }
 
-# Output the bucket name
+# Bucket policy
+resource "aws_s3_bucket_policy" "bucket_policy" {
+  bucket = aws_s3_bucket.main.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyUnencryptedObjectUploads"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:PutObject"
+        Resource  = "${aws_s3_bucket.main.arn}/*"
+        Condition = {
+          StringNotEquals = {
+            "s3:x-amz-server-side-encryption" = "AES256"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# Outputs
 output "bucket_name" {
-  description = "The name of the S3 bucket"
+  description = "Name of the created S3 bucket"
   value       = aws_s3_bucket.main.id
 }
 
 output "bucket_arn" {
-  description = "The ARN of the S3 bucket"
+  description = "ARN of the created S3 bucket"
   value       = aws_s3_bucket.main.arn
 }
