@@ -5,10 +5,10 @@ provider "aws" {
 
 # Create S3 bucket
 resource "aws_s3_bucket" "main" {
-  bucket = "hello1234243"
+  bucket = "test-terraform-s312345"
 
   tags = {
-    Name        = "hello1234243"
+    Name        = "test-terraform-s312345"
     Environment = "Production"
     ManagedBy   = "Terraform"
     CreatedDate = timestamp()
