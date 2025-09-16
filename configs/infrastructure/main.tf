@@ -3,21 +3,20 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Create S3 bucket
-resource "aws_s3_bucket" "help_me1334" {
-  bucket = "help-me1334"
+# Create S3 Bucket
+resource "aws_s3_bucket" "main" {
+  bucket = "hellodarknessmyoldfriend"
 
   tags = {
-    Name        = "help-me1334"
-    Environment = "dev"
-    Managed_by  = "terraform"
-    Created_at  = timestamp()
+    Name        = "hellodarknessmyoldfriend"
+    Environment = "Production"
+    Managed_by  = "Terraform"
   }
 }
 
 # Enable versioning
 resource "aws_s3_bucket_versioning" "versioning" {
-  bucket = aws_s3_bucket.help_me1334.id
+  bucket = aws_s3_bucket.main.id
   versioning_configuration {
     status = "Enabled"
   }
@@ -25,7 +24,7 @@ resource "aws_s3_bucket_versioning" "versioning" {
 
 # Enable server-side encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
-  bucket = aws_s3_bucket.help_me1334.id
+  bucket = aws_s3_bucket.main.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -36,7 +35,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
 
 # Block public access
 resource "aws_s3_bucket_public_access_block" "public_access_block" {
-  bucket = aws_s3_bucket.help_me1334.id
+  bucket = aws_s3_bucket.main.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -46,11 +45,11 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
 
 # Output the bucket name and ARN
 output "bucket_name" {
+  value       = aws_s3_bucket.main.id
   description = "The name of the bucket"
-  value       = aws_s3_bucket.help_me1334.id
 }
 
 output "bucket_arn" {
+  value       = aws_s3_bucket.main.arn
   description = "The ARN of the bucket"
-  value       = aws_s3_bucket.help_me1334.arn
 }
