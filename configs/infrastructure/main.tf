@@ -2,11 +2,11 @@
 provider "aws" {}
 
 # Create S3 Bucket
-resource "aws_s3_bucket" "test_bucket" {
-  bucket = "test-3"
+resource "aws_s3_bucket" "test_rest_bucket" {
+  bucket = "test-rest-1242424"
 
   tags = {
-    Name        = "test-3"
+    Name        = "test-rest-1242424"
     Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -14,16 +14,16 @@ resource "aws_s3_bucket" "test_bucket" {
 }
 
 # Enable versioning
-resource "aws_s3_bucket_versioning" "test_bucket_versioning" {
-  bucket = aws_s3_bucket.test_bucket.id
+resource "aws_s3_bucket_versioning" "test_rest_bucket_versioning" {
+  bucket = aws_s3_bucket.test_rest_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 # Enable server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "test_bucket_encryption" {
-  bucket = aws_s3_bucket.test_bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "test_rest_bucket_encryption" {
+  bucket = aws_s3_bucket.test_rest_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -33,8 +33,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "test_bucket_encry
 }
 
 # Block public access
-resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
-  bucket = aws_s3_bucket.test_bucket.id
+resource "aws_s3_bucket_public_access_block" "test_rest_bucket_public_access_block" {
+  bucket = aws_s3_bucket.test_rest_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -42,16 +42,17 @@ resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
   restrict_public_buckets = true
 }
 
-# Add lifecycle rule for test environment
-resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
-  bucket = aws_s3_bucket.test_bucket.id
+# Add lifecycle rules for test environment
+resource "aws_s3_bucket_lifecycle_configuration" "test_rest_bucket_lifecycle" {
+  bucket = aws_s3_bucket.test_rest_bucket.id
 
   rule {
-    id     = "test_environment_cleanup"
+    id     = "test_cleanup"
     status = "Enabled"
 
+    # Clean up old files after 30 days in test environment
     expiration {
-      days = 30  # Delete objects after 30 days in test environment
+      days = 30
     }
 
     # Clean up incomplete multipart uploads
@@ -63,21 +64,21 @@ resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
 
 # Output the bucket details
 output "bucket_name" {
-  value       = aws_s3_bucket.test_bucket.id
+  value       = aws_s3_bucket.test_rest_bucket.id
   description = "The name of the bucket"
 }
 
 output "bucket_arn" {
-  value       = aws_s3_bucket.test_bucket.arn
+  value       = aws_s3_bucket.test_rest_bucket.arn
   description = "The ARN of the bucket"
 }
 
 output "bucket_domain_name" {
-  value       = aws_s3_bucket.test_bucket.bucket_domain_name
+  value       = aws_s3_bucket.test_rest_bucket.bucket_domain_name
   description = "The bucket domain name"
 }
 
-output "bucket_region" {
-  value       = aws_s3_bucket.test_bucket.region
-  description = "The region where the bucket is created"
+output "bucket_regional_domain_name" {
+  value       = aws_s3_bucket.test_rest_bucket.bucket_regional_domain_name
+  description = "The bucket region-specific domain name"
 }
