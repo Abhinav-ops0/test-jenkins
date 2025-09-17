@@ -3,24 +3,23 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Create S3 bucket with deletion protection
+# Create S3 bucket
 resource "aws_s3_bucket" "main" {
-  bucket = "dont-destroy-last"
-
-  # Enable force destroy to false for additional deletion protection
-  force_destroy = false
+  bucket = "is-it-done"
 
   tags = {
-    Name        = "dont-destroy-last"
+    Name        = "is-it-done"
     Environment = "Production"
     ManagedBy   = "Terraform"
     CreatedDate = timestamp()
-    DoNotDelete = "true"
   }
+}
 
-  # Enable versioning by default
-  versioning {
-    enabled = true
+# Enable versioning
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.main.id
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
@@ -45,69 +44,22 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
   restrict_public_buckets = true
 }
 
-# Enable MFA Delete for additional protection
-resource "aws_s3_bucket_versioning" "versioning" {
-  bucket = aws_s3_bucket.main.id
-  versioning_configuration {
-    status = "Enabled"
-    mfa_delete = "Enabled"
-  }
-}
-
-# Add bucket policy to prevent deletion
-resource "aws_s3_bucket_policy" "prevent_delete" {
-  bucket = aws_s3_bucket.main.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PreventDeleteBucket"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = [
-          "s3:DeleteBucket"
-        ]
-        Resource  = aws_s3_bucket.main.arn
-        Condition = {
-          StringNotLike = {
-            "aws:PrincipalARN": ["arn:aws:iam::*:role/AdminRole"]  # Replace with your admin role ARN
-          }
-        }
-      }
-    ]
-  })
-}
-
 # Enable lifecycle rules
 resource "aws_s3_bucket_lifecycle_configuration" "lifecycle_rule" {
   bucket = aws_s3_bucket.main.id
 
   rule {
-    id     = "protect_and_archive"
+    id     = "transition_to_ia"
     status = "Enabled"
 
-    # Move to IA after 30 days
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
     }
 
-    # Move to Glacier after 90 days
-    transition {
-      days          = 90
-      storage_class = "GLACIER"
-    }
-
-    # Keep noncurrent versions
     noncurrent_version_transition {
       noncurrent_days = 30
-      storage_class   = "GLACIER"
-    }
-
-    # Never expire current versions
-    expiration {
-      expired_object_delete_marker = true
+      storage_class   = "STANDARD_IA"
     }
   }
 }
