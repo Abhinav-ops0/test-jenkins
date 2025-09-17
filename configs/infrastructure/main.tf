@@ -1,14 +1,12 @@
 # Configure AWS Provider
-provider "aws" {
-  region = "us-east-1"
-}
+provider "aws" {}
 
 # Create S3 Bucket
 resource "aws_s3_bucket" "test_bucket" {
-  bucket = "test-12345"
+  bucket = "test-2"
 
   tags = {
-    Name        = "test-12345"
+    Name        = "test-2"
     Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -44,23 +42,16 @@ resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
   restrict_public_buckets = true
 }
 
-# Add lifecycle rule for test environment
+# Add basic lifecycle rule for test environment
 resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
   bucket = aws_s3_bucket.test_bucket.id
 
   rule {
-    id     = "cleanup_test_files"
+    id     = "test_environment_cleanup"
     status = "Enabled"
 
-    # Move files to Standard-IA after 30 days
-    transition {
-      days          = 30
-      storage_class = "STANDARD_IA"
-    }
-
-    # Delete files after 90 days
     expiration {
-      days = 90
+      days = 90  # Delete files after 90 days
     }
 
     # Clean up incomplete multipart uploads
@@ -81,7 +72,7 @@ output "bucket_arn" {
   description = "The ARN of the bucket"
 }
 
-output "bucket_region" {
-  value       = aws_s3_bucket.test_bucket.region
-  description = "The region where the bucket is created"
+output "bucket_domain_name" {
+  value       = aws_s3_bucket.test_bucket.bucket_domain_name
+  description = "The bucket domain name"
 }
