@@ -5,10 +5,10 @@ provider "aws" {
 
 # Create S3 Bucket
 resource "aws_s3_bucket" "test_bucket" {
-  bucket = "test1234"
+  bucket = "test-12345"
 
   tags = {
-    Name        = "test1234"
+    Name        = "test-12345"
     Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -61,6 +61,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
     # Delete files after 90 days
     expiration {
       days = 90
+    }
+
+    # Clean up incomplete multipart uploads
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 }
