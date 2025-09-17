@@ -4,11 +4,11 @@ provider "aws" {
 }
 
 # Create S3 Bucket
-resource "aws_s3_bucket" "reset_hard_bucket" {
-  bucket = "reset-hard"
+resource "aws_s3_bucket" "rest_bucket" {
+  bucket = "rest-1"
 
   tags = {
-    Name        = "reset-hard"
+    Name        = "rest-1"
     Environment = "production"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -16,16 +16,16 @@ resource "aws_s3_bucket" "reset_hard_bucket" {
 }
 
 # Enable versioning
-resource "aws_s3_bucket_versioning" "reset_hard_bucket_versioning" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+resource "aws_s3_bucket_versioning" "rest_bucket_versioning" {
+  bucket = aws_s3_bucket.rest_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 # Enable server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "reset_hard_bucket_encryption" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "rest_bucket_encryption" {
+  bucket = aws_s3_bucket.rest_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -35,8 +35,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "reset_hard_bucket
 }
 
 # Block public access
-resource "aws_s3_bucket_public_access_block" "reset_hard_bucket_public_access_block" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+resource "aws_s3_bucket_public_access_block" "rest_bucket_public_access_block" {
+  bucket = aws_s3_bucket.rest_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -45,16 +45,16 @@ resource "aws_s3_bucket_public_access_block" "reset_hard_bucket_public_access_bl
 }
 
 # Enable access logging
-resource "aws_s3_bucket_logging" "reset_hard_bucket_logging" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+resource "aws_s3_bucket_logging" "rest_bucket_logging" {
+  bucket = aws_s3_bucket.rest_bucket.id
 
-  target_bucket = aws_s3_bucket.reset_hard_bucket.id
+  target_bucket = aws_s3_bucket.rest_bucket.id
   target_prefix = "access-logs/"
 }
 
 # Add lifecycle rules
-resource "aws_s3_bucket_lifecycle_configuration" "reset_hard_bucket_lifecycle" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+resource "aws_s3_bucket_lifecycle_configuration" "rest_bucket_lifecycle" {
+  bucket = aws_s3_bucket.rest_bucket.id
 
   rule {
     id     = "archive_and_delete"
@@ -78,16 +78,21 @@ resource "aws_s3_bucket_lifecycle_configuration" "reset_hard_bucket_lifecycle" {
 
 # Output the bucket details
 output "bucket_name" {
-  value       = aws_s3_bucket.reset_hard_bucket.id
+  value       = aws_s3_bucket.rest_bucket.id
   description = "The name of the bucket"
 }
 
 output "bucket_arn" {
-  value       = aws_s3_bucket.reset_hard_bucket.arn
+  value       = aws_s3_bucket.rest_bucket.arn
   description = "The ARN of the bucket"
 }
 
 output "bucket_domain_name" {
-  value       = aws_s3_bucket.reset_hard_bucket.bucket_domain_name
+  value       = aws_s3_bucket.rest_bucket.bucket_domain_name
   description = "The bucket domain name"
+}
+
+output "bucket_region" {
+  value       = aws_s3_bucket.rest_bucket.region
+  description = "The region where the bucket is created"
 }
