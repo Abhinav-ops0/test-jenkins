@@ -3,10 +3,10 @@ provider "aws" {}
 
 # Create S3 Bucket
 resource "aws_s3_bucket" "test_bucket" {
-  bucket = "test-2"
+  bucket = "test-3"
 
   tags = {
-    Name        = "test-2"
+    Name        = "test-3"
     Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -42,7 +42,7 @@ resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
   restrict_public_buckets = true
 }
 
-# Add basic lifecycle rule for test environment
+# Add lifecycle rule for test environment
 resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
   bucket = aws_s3_bucket.test_bucket.id
 
@@ -51,7 +51,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
     status = "Enabled"
 
     expiration {
-      days = 90  # Delete files after 90 days
+      days = 30  # Delete objects after 30 days in test environment
     }
 
     # Clean up incomplete multipart uploads
@@ -75,4 +75,9 @@ output "bucket_arn" {
 output "bucket_domain_name" {
   value       = aws_s3_bucket.test_bucket.bucket_domain_name
   description = "The bucket domain name"
+}
+
+output "bucket_region" {
+  value       = aws_s3_bucket.test_bucket.region
+  description = "The region where the bucket is created"
 }
