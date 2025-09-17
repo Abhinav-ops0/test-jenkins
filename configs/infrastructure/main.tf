@@ -1,35 +1,31 @@
 # Configure AWS Provider
 provider "aws" {
-  region = "us-west-2"  # Updated region to us-west-2
+  region = "us-east-1"
 }
 
 # Create S3 Bucket
-resource "aws_s3_bucket" "reset_hard_bucket" {
-  bucket = "reset-hard"
-  
-  # Force destroy option - be careful with this in production
-  force_destroy = true
+resource "aws_s3_bucket" "test_bucket" {
+  bucket = "test1234"
 
   tags = {
-    Name        = "reset-hard"
-    Environment = "production"
+    Name        = "test1234"
+    Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
-    Region      = "us-west-2"
   }
 }
 
 # Enable versioning
-resource "aws_s3_bucket_versioning" "reset_hard_bucket_versioning" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+resource "aws_s3_bucket_versioning" "test_bucket_versioning" {
+  bucket = aws_s3_bucket.test_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 # Enable server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "reset_hard_bucket_encryption" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "test_bucket_encryption" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -39,8 +35,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "reset_hard_bucket
 }
 
 # Block public access
-resource "aws_s3_bucket_public_access_block" "reset_hard_bucket_public_access_block" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -48,55 +44,39 @@ resource "aws_s3_bucket_public_access_block" "reset_hard_bucket_public_access_bl
   restrict_public_buckets = true
 }
 
-# Enable access logging
-resource "aws_s3_bucket_logging" "reset_hard_bucket_logging" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
-
-  target_bucket = aws_s3_bucket.reset_hard_bucket.id
-  target_prefix = "access-logs/"
-}
-
-# Add lifecycle rules
-resource "aws_s3_bucket_lifecycle_configuration" "reset_hard_bucket_lifecycle" {
-  bucket = aws_s3_bucket.reset_hard_bucket.id
+# Add lifecycle rule for test environment
+resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   rule {
-    id     = "archive_and_delete"
+    id     = "cleanup_test_files"
     status = "Enabled"
 
+    # Move files to Standard-IA after 30 days
     transition {
-      days          = 90
+      days          = 30
       storage_class = "STANDARD_IA"
     }
 
-    transition {
-      days          = 180
-      storage_class = "GLACIER"
-    }
-
-    noncurrent_version_expiration {
-      noncurrent_days = 90
+    # Delete files after 90 days
+    expiration {
+      days = 90
     }
   }
 }
 
 # Output the bucket details
 output "bucket_name" {
-  value       = aws_s3_bucket.reset_hard_bucket.id
+  value       = aws_s3_bucket.test_bucket.id
   description = "The name of the bucket"
 }
 
 output "bucket_arn" {
-  value       = aws_s3_bucket.reset_hard_bucket.arn
+  value       = aws_s3_bucket.test_bucket.arn
   description = "The ARN of the bucket"
 }
 
-output "bucket_domain_name" {
-  value       = aws_s3_bucket.reset_hard_bucket.bucket_domain_name
-  description = "The bucket domain name"
-}
-
 output "bucket_region" {
-  value       = "us-west-2"
+  value       = aws_s3_bucket.test_bucket.region
   description = "The region where the bucket is created"
 }
