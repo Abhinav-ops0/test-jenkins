@@ -2,28 +2,29 @@
 provider "aws" {}
 
 # Create S3 Bucket
-resource "aws_s3_bucket" "test_pr_bucket" {
-  bucket = "test-pr-refresh-new"
+resource "aws_s3_bucket" "bulk_refresh_bucket" {
+  bucket = "test-bulk-refresh"
 
   tags = {
-    Name        = "test-pr-refresh-new"
+    Name        = "test-bulk-refresh"
     Environment = "test"
+    Purpose     = "Bulk Operations Testing"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
   }
 }
 
 # Enable versioning
-resource "aws_s3_bucket_versioning" "test_pr_bucket_versioning" {
-  bucket = aws_s3_bucket.test_pr_bucket.id
+resource "aws_s3_bucket_versioning" "bulk_refresh_bucket_versioning" {
+  bucket = aws_s3_bucket.bulk_refresh_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 # Enable server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "test_pr_bucket_encryption" {
-  bucket = aws_s3_bucket.test_pr_bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "bulk_refresh_bucket_encryption" {
+  bucket = aws_s3_bucket.bulk_refresh_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -33,8 +34,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "test_pr_bucket_en
 }
 
 # Block public access
-resource "aws_s3_bucket_public_access_block" "test_pr_bucket_public_access_block" {
-  bucket = aws_s3_bucket.test_pr_bucket.id
+resource "aws_s3_bucket_public_access_block" "bulk_refresh_bucket_public_access_block" {
+  bucket = aws_s3_bucket.bulk_refresh_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -43,14 +44,14 @@ resource "aws_s3_bucket_public_access_block" "test_pr_bucket_public_access_block
 }
 
 # Add lifecycle rules for test environment
-resource "aws_s3_bucket_lifecycle_configuration" "test_pr_bucket_lifecycle" {
-  bucket = aws_s3_bucket.test_pr_bucket.id
+resource "aws_s3_bucket_lifecycle_configuration" "bulk_refresh_bucket_lifecycle" {
+  bucket = aws_s3_bucket.bulk_refresh_bucket.id
 
   rule {
-    id     = "test_environment_cleanup"
+    id     = "test_cleanup"
     status = "Enabled"
 
-    # Move files to Standard-IA after 30 days
+    # Move files to IA after 30 days
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
@@ -69,30 +70,30 @@ resource "aws_s3_bucket_lifecycle_configuration" "test_pr_bucket_lifecycle" {
 }
 
 # Enable access logging
-resource "aws_s3_bucket_logging" "test_pr_bucket_logging" {
-  bucket = aws_s3_bucket.test_pr_bucket.id
+resource "aws_s3_bucket_logging" "bulk_refresh_bucket_logging" {
+  bucket = aws_s3_bucket.bulk_refresh_bucket.id
 
-  target_bucket = aws_s3_bucket.test_pr_bucket.id
+  target_bucket = aws_s3_bucket.bulk_refresh_bucket.id
   target_prefix = "access-logs/"
 }
 
 # Output the bucket details
 output "bucket_name" {
-  value       = aws_s3_bucket.test_pr_bucket.id
+  value       = aws_s3_bucket.bulk_refresh_bucket.id
   description = "The name of the bucket"
 }
 
 output "bucket_arn" {
-  value       = aws_s3_bucket.test_pr_bucket.arn
+  value       = aws_s3_bucket.bulk_refresh_bucket.arn
   description = "The ARN of the bucket"
 }
 
 output "bucket_domain_name" {
-  value       = aws_s3_bucket.test_pr_bucket.bucket_domain_name
+  value       = aws_s3_bucket.bulk_refresh_bucket.bucket_domain_name
   description = "The bucket domain name"
 }
 
 output "bucket_regional_domain_name" {
-  value       = aws_s3_bucket.test_pr_bucket.bucket_regional_domain_name
+  value       = aws_s3_bucket.bulk_refresh_bucket.bucket_regional_domain_name
   description = "The bucket region-specific domain name"
 }
