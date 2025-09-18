@@ -1,14 +1,12 @@
 # Configure AWS Provider
-provider "aws" {
-  region = "us-east-1"
-}
+provider "aws" {}
 
 # Create S3 Bucket
 resource "aws_s3_bucket" "test_config_bucket" {
-  bucket = "s3-test-new-config-124242"
+  bucket = "test-1232-config-test-test-test"
 
   tags = {
-    Name        = "s3-test-new-config-124242"
+    Name        = "test-1232-config-test-test-test"
     Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -44,34 +42,28 @@ resource "aws_s3_bucket_public_access_block" "test_config_bucket_public_access_b
   restrict_public_buckets = true
 }
 
-# Enable access logging
-resource "aws_s3_bucket_logging" "test_config_bucket_logging" {
-  bucket = aws_s3_bucket.test_config_bucket.id
-
-  target_bucket = aws_s3_bucket.test_config_bucket.id
-  target_prefix = "access-logs/"
-}
-
-# Add lifecycle rules
+# Add lifecycle rules for test environment
 resource "aws_s3_bucket_lifecycle_configuration" "test_config_bucket_lifecycle" {
   bucket = aws_s3_bucket.test_config_bucket.id
 
   rule {
-    id     = "archive_and_delete"
+    id     = "test_environment_cleanup"
     status = "Enabled"
 
+    # Transition to IA after 30 days
     transition {
-      days          = 90
+      days          = 30
       storage_class = "STANDARD_IA"
     }
 
-    transition {
-      days          = 180
-      storage_class = "GLACIER"
+    # Clean up old versions after 60 days
+    noncurrent_version_expiration {
+      noncurrent_days = 60
     }
 
-    noncurrent_version_expiration {
-      noncurrent_days = 90
+    # Delete markers for expired objects
+    expiration {
+      expired_object_delete_marker = true
     }
   }
 }
@@ -92,7 +84,7 @@ output "bucket_domain_name" {
   description = "The bucket domain name"
 }
 
-output "bucket_region" {
-  value       = aws_s3_bucket.test_config_bucket.region
-  description = "The region where the bucket is created"
+output "bucket_regional_domain_name" {
+  value       = aws_s3_bucket.test_config_bucket.bucket_regional_domain_name
+  description = "The bucket region-specific domain name"
 }
