@@ -2,11 +2,11 @@
 provider "aws" {}
 
 # Create S3 Bucket
-resource "aws_s3_bucket" "test_bucket" {
-  bucket = "test-123-new-settings"
+resource "aws_s3_bucket" "test_pr_bucket" {
+  bucket = "test-pr-refresh-new"
 
   tags = {
-    Name        = "test-123-new-settings"
+    Name        = "test-pr-refresh-new"
     Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -14,28 +14,27 @@ resource "aws_s3_bucket" "test_bucket" {
 }
 
 # Enable versioning
-resource "aws_s3_bucket_versioning" "test_bucket_versioning" {
-  bucket = aws_s3_bucket.test_bucket.id
+resource "aws_s3_bucket_versioning" "test_pr_bucket_versioning" {
+  bucket = aws_s3_bucket.test_pr_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 # Enable server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "test_bucket_encryption" {
-  bucket = aws_s3_bucket.test_bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "test_pr_bucket_encryption" {
+  bucket = aws_s3_bucket.test_pr_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
-    bucket_key_enabled = true
   }
 }
 
 # Block public access
-resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
-  bucket = aws_s3_bucket.test_bucket.id
+resource "aws_s3_bucket_public_access_block" "test_pr_bucket_public_access_block" {
+  bucket = aws_s3_bucket.test_pr_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -43,17 +42,9 @@ resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
   restrict_public_buckets = true
 }
 
-# Enable access logging
-resource "aws_s3_bucket_logging" "test_bucket_logging" {
-  bucket = aws_s3_bucket.test_bucket.id
-
-  target_bucket = aws_s3_bucket.test_bucket.id
-  target_prefix = "access-logs/"
-}
-
 # Add lifecycle rules for test environment
-resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
-  bucket = aws_s3_bucket.test_bucket.id
+resource "aws_s3_bucket_lifecycle_configuration" "test_pr_bucket_lifecycle" {
+  bucket = aws_s3_bucket.test_pr_bucket.id
 
   rule {
     id     = "test_environment_cleanup"
@@ -70,56 +61,38 @@ resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
       days = 90
     }
 
-    # Clean up incomplete multipart uploads
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 7
+    # Clean up old versions after 30 days
+    noncurrent_version_expiration {
+      noncurrent_days = 30
     }
   }
 }
 
-# Add bucket policy for enforcing SSL
-resource "aws_s3_bucket_policy" "test_bucket_ssl_policy" {
-  bucket = aws_s3_bucket.test_bucket.id
+# Enable access logging
+resource "aws_s3_bucket_logging" "test_pr_bucket_logging" {
+  bucket = aws_s3_bucket.test_pr_bucket.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "EnforceSSLOnly"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:*"
-        Resource = [
-          aws_s3_bucket.test_bucket.arn,
-          "${aws_s3_bucket.test_bucket.arn}/*"
-        ]
-        Condition = {
-          Bool = {
-            "aws:SecureTransport" = "false"
-          }
-        }
-      }
-    ]
-  })
+  target_bucket = aws_s3_bucket.test_pr_bucket.id
+  target_prefix = "access-logs/"
 }
 
-# Output important information
+# Output the bucket details
 output "bucket_name" {
-  value       = aws_s3_bucket.test_bucket.id
+  value       = aws_s3_bucket.test_pr_bucket.id
   description = "The name of the bucket"
 }
 
 output "bucket_arn" {
-  value       = aws_s3_bucket.test_bucket.arn
+  value       = aws_s3_bucket.test_pr_bucket.arn
   description = "The ARN of the bucket"
 }
 
 output "bucket_domain_name" {
-  value       = aws_s3_bucket.test_bucket.bucket_domain_name
+  value       = aws_s3_bucket.test_pr_bucket.bucket_domain_name
   description = "The bucket domain name"
 }
 
 output "bucket_regional_domain_name" {
-  value       = aws_s3_bucket.test_bucket.bucket_regional_domain_name
+  value       = aws_s3_bucket.test_pr_bucket.bucket_regional_domain_name
   description = "The bucket region-specific domain name"
 }
