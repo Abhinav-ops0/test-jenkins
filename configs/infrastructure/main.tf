@@ -1,29 +1,37 @@
-# Configure AWS Provider (S3 is a global service, but we need provider configuration)
-provider "aws" {}
+# Configure AWS Provider (S3 is a global service, but we include region for DynamoDB table)
+provider "aws" {
+  region = "ap-south-1"  # Using the supported region
+}
 
-# Create S3 Bucket
-resource "aws_s3_bucket" "test_bucket" {
-  bucket = "test-withou0t-editor"
+# Create S3 Bucket for state files
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "state-lock-check"
+
+  # Prevent accidental deletion of this S3 bucket
+  lifecycle {
+    prevent_destroy = true
+  }
 
   tags = {
-    Name        = "test-withou0t-editor"
-    Environment = "test"
+    Name        = "state-lock-check"
+    Environment = "production"
+    Purpose     = "Terraform State Storage"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
   }
 }
 
-# Enable versioning
-resource "aws_s3_bucket_versioning" "test_bucket_versioning" {
-  bucket = aws_s3_bucket.test_bucket.id
+# Enable versioning for state files
+resource "aws_s3_bucket_versioning" "terraform_state_versioning" {
+  bucket = aws_s3_bucket.terraform_state.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 # Enable server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "test_bucket_encryption" {
-  bucket = aws_s3_bucket.test_bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state_encryption" {
+  bucket = aws_s3_bucket.terraform_state.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -32,9 +40,9 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "test_bucket_encry
   }
 }
 
-# Block public access
-resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
-  bucket = aws_s3_bucket.test_bucket.id
+# Block all public access
+resource "aws_s3_bucket_public_access_block" "terraform_state_public_access_block" {
+  bucket = aws_s3_bucket.terraform_state.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -42,44 +50,37 @@ resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
   restrict_public_buckets = true
 }
 
-# Add basic lifecycle rules
-resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
-  bucket = aws_s3_bucket.test_bucket.id
+# Create DynamoDB table for state locking
+resource "aws_dynamodb_table" "terraform_state_lock" {
+  name           = "terraform-state-lock"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "LockID"
 
-  rule {
-    id     = "cleanup_test_files"
-    status = "Enabled"
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
 
-    # Move files to IA after 30 days
-    transition {
-      days          = 30
-      storage_class = "STANDARD_IA"
-    }
-
-    # Delete files after 90 days
-    expiration {
-      days = 90
-    }
+  tags = {
+    Name        = "terraform-state-lock"
+    Environment = "production"
+    Purpose     = "Terraform State Locking"
+    Managed_by  = "Terraform"
   }
 }
 
-# Output the bucket details
-output "bucket_name" {
-  value       = aws_s3_bucket.test_bucket.id
-  description = "The name of the bucket"
+# Output the bucket and DynamoDB table details
+output "state_bucket_name" {
+  value       = aws_s3_bucket.terraform_state.id
+  description = "The name of the S3 bucket"
 }
 
-output "bucket_arn" {
-  value       = aws_s3_bucket.test_bucket.arn
-  description = "The ARN of the bucket"
+output "state_bucket_arn" {
+  value       = aws_s3_bucket.terraform_state.arn
+  description = "The ARN of the S3 bucket"
 }
 
-output "bucket_domain_name" {
-  value       = aws_s3_bucket.test_bucket.bucket_domain_name
-  description = "The bucket domain name"
-}
-
-output "bucket_region" {
-  value       = aws_s3_bucket.test_bucket.region
-  description = "The region where the bucket is created"
+output "dynamodb_table_name" {
+  value       = aws_dynamodb_table.terraform_state_lock.name
+  description = "The name of the DynamoDB table for state locking"
 }
