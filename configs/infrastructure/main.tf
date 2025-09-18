@@ -2,11 +2,11 @@
 provider "aws" {}
 
 # Create S3 Bucket
-resource "aws_s3_bucket" "robust_test_bucket" {
-  bucket = "test-4-robust"
+resource "aws_s3_bucket" "test_bucket" {
+  bucket = "test-123-new-settings"
 
   tags = {
-    Name        = "test-4-robust"
+    Name        = "test-123-new-settings"
     Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -14,16 +14,16 @@ resource "aws_s3_bucket" "robust_test_bucket" {
 }
 
 # Enable versioning
-resource "aws_s3_bucket_versioning" "robust_test_bucket_versioning" {
-  bucket = aws_s3_bucket.robust_test_bucket.id
+resource "aws_s3_bucket_versioning" "test_bucket_versioning" {
+  bucket = aws_s3_bucket.test_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 # Enable server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "robust_test_bucket_encryption" {
-  bucket = aws_s3_bucket.robust_test_bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "test_bucket_encryption" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -34,8 +34,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "robust_test_bucke
 }
 
 # Block public access
-resource "aws_s3_bucket_public_access_block" "robust_test_bucket_public_access_block" {
-  bucket = aws_s3_bucket.robust_test_bucket.id
+resource "aws_s3_bucket_public_access_block" "test_bucket_public_access_block" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -44,22 +44,22 @@ resource "aws_s3_bucket_public_access_block" "robust_test_bucket_public_access_b
 }
 
 # Enable access logging
-resource "aws_s3_bucket_logging" "robust_test_bucket_logging" {
-  bucket = aws_s3_bucket.robust_test_bucket.id
+resource "aws_s3_bucket_logging" "test_bucket_logging" {
+  bucket = aws_s3_bucket.test_bucket.id
 
-  target_bucket = aws_s3_bucket.robust_test_bucket.id
+  target_bucket = aws_s3_bucket.test_bucket.id
   target_prefix = "access-logs/"
 }
 
 # Add lifecycle rules for test environment
-resource "aws_s3_bucket_lifecycle_configuration" "robust_test_bucket_lifecycle" {
-  bucket = aws_s3_bucket.robust_test_bucket.id
+resource "aws_s3_bucket_lifecycle_configuration" "test_bucket_lifecycle" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   rule {
     id     = "test_environment_cleanup"
     status = "Enabled"
 
-    # Move files to IA after 30 days
+    # Move files to Standard-IA after 30 days
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
@@ -77,21 +77,21 @@ resource "aws_s3_bucket_lifecycle_configuration" "robust_test_bucket_lifecycle" 
   }
 }
 
-# Add bucket policy to enforce SSL
-resource "aws_s3_bucket_policy" "robust_test_bucket_policy" {
-  bucket = aws_s3_bucket.robust_test_bucket.id
+# Add bucket policy for enforcing SSL
+resource "aws_s3_bucket_policy" "test_bucket_ssl_policy" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "ForceSSLOnly"
+        Sid       = "EnforceSSLOnly"
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
         Resource = [
-          aws_s3_bucket.robust_test_bucket.arn,
-          "${aws_s3_bucket.robust_test_bucket.arn}/*"
+          aws_s3_bucket.test_bucket.arn,
+          "${aws_s3_bucket.test_bucket.arn}/*"
         ]
         Condition = {
           Bool = {
@@ -103,23 +103,23 @@ resource "aws_s3_bucket_policy" "robust_test_bucket_policy" {
   })
 }
 
-# Output the bucket details
+# Output important information
 output "bucket_name" {
-  value       = aws_s3_bucket.robust_test_bucket.id
+  value       = aws_s3_bucket.test_bucket.id
   description = "The name of the bucket"
 }
 
 output "bucket_arn" {
-  value       = aws_s3_bucket.robust_test_bucket.arn
+  value       = aws_s3_bucket.test_bucket.arn
   description = "The ARN of the bucket"
 }
 
 output "bucket_domain_name" {
-  value       = aws_s3_bucket.robust_test_bucket.bucket_domain_name
+  value       = aws_s3_bucket.test_bucket.bucket_domain_name
   description = "The bucket domain name"
 }
 
 output "bucket_regional_domain_name" {
-  value       = aws_s3_bucket.robust_test_bucket.bucket_regional_domain_name
+  value       = aws_s3_bucket.test_bucket.bucket_regional_domain_name
   description = "The bucket region-specific domain name"
 }
