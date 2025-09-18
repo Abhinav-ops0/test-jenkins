@@ -1,12 +1,14 @@
 # Configure AWS Provider
-provider "aws" {}
+provider "aws" {
+  region = "us-east-1"
+}
 
 # Create S3 Bucket
 resource "aws_s3_bucket" "test_config_bucket" {
-  bucket = "s3-test-new-config"
+  bucket = "s3-test-new-config-124242"
 
   tags = {
-    Name        = "s3-test-new-config"
+    Name        = "s3-test-new-config-124242"
     Environment = "test"
     Managed_by  = "Terraform"
     Created_at  = timestamp()
@@ -29,7 +31,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "test_config_bucke
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
-    bucket_key_enabled = true  # Reduces encryption costs
   }
 }
 
@@ -51,59 +52,31 @@ resource "aws_s3_bucket_logging" "test_config_bucket_logging" {
   target_prefix = "access-logs/"
 }
 
-# Add lifecycle rules for test environment
+# Add lifecycle rules
 resource "aws_s3_bucket_lifecycle_configuration" "test_config_bucket_lifecycle" {
   bucket = aws_s3_bucket.test_config_bucket.id
 
   rule {
-    id     = "test_environment_cleanup"
+    id     = "archive_and_delete"
     status = "Enabled"
 
-    # Move files to IA after 30 days
     transition {
-      days          = 30
+      days          = 90
       storage_class = "STANDARD_IA"
     }
 
-    # Delete files after 90 days
-    expiration {
-      days = 90
+    transition {
+      days          = 180
+      storage_class = "GLACIER"
     }
 
-    # Clean up incomplete multipart uploads
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 7
+    noncurrent_version_expiration {
+      noncurrent_days = 90
     }
   }
 }
 
-# Add bucket policy to enforce SSL
-resource "aws_s3_bucket_policy" "test_config_bucket_policy" {
-  bucket = aws_s3_bucket.test_config_bucket.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "EnforceSSLOnly"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:*"
-        Resource = [
-          aws_s3_bucket.test_config_bucket.arn,
-          "${aws_s3_bucket.test_config_bucket.arn}/*"
-        ]
-        Condition = {
-          Bool = {
-            "aws:SecureTransport": "false"
-          }
-        }
-      }
-    ]
-  })
-}
-
-# Output important information
+# Output the bucket details
 output "bucket_name" {
   value       = aws_s3_bucket.test_config_bucket.id
   description = "The name of the bucket"
@@ -119,7 +92,7 @@ output "bucket_domain_name" {
   description = "The bucket domain name"
 }
 
-output "bucket_regional_domain_name" {
-  value       = aws_s3_bucket.test_config_bucket.bucket_regional_domain_name
-  description = "The bucket region-specific domain name"
+output "bucket_region" {
+  value       = aws_s3_bucket.test_config_bucket.region
+  description = "The region where the bucket is created"
 }
